@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSG Surveillance System</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <style>
+        :root {
+            --primary-color: #00BFFF; /* Electric Blue */
+            --secondary-color: #708090; /* Steel Gray */
+            --background-color: #121212; /* Black */
+            --text-color: #FFFFFF;
+            --card-bg: #1E1E1E;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 240px;
+            background-color: #1A1A1A;
+            padding-top: 64px;
+            position: fixed;
+            height: 100vh;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        .main-content {
+            flex-grow: 1;
+            margin-left: 240px;
+            padding: 80px 20px 20px;
+        }
+        
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background-color: #1A1A1A;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .navbar-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-left: 20px;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: #AAAAAA;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        
+        .menu-item:hover {
+            background-color: #2A2A2A;
+        }
+        
+        .menu-item.active {
+            background-color: #333333;
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .menu-item-icon {
+            margin-right: 12px;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--primary-color);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: linear-gradient(135deg, #1E1E1E 0%, #2A2A2A 100%);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+        }
+        
+        .stat-info {
+            flex-grow: 1;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            color: #AAAAAA;
+            font-size: 0.9rem;
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .video-card {
+            background-color: #1E1E1E;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .video-feed {
+            width: 100%;
+            height: 180px;
+            background-color: #000000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .video-feed::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 100%);
+            z-index: 1;
+        }
+        
+        .video-feed::after {
+            content: "LIVE";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #FF0000;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 2;
+        }
+        
+        .video-info {
+            padding: 12px;
+        }
+        
+        .video-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .video-location {
+            color: #AAAAAA;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        
+        .status-online {
+            background-color: #4CAF50;
+        }
+        
+        .status-offline {
+            background-color: #F44336;
+        }
+        
+        .status-warning {
+            background-color: #FFC107;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            margin-bottom: 24px;
+            font-weight: bold;
+        }
+        
+        .button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .button:hover {
+            background-color: #0099CC;
+        }
+        
+        .button-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .button-outline:hover {
+            background-color: rgba(0, 191, 255, 0.1);
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background-color: #2A2A2A;
+        }
+        
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+        }
+        
+        .alert-high {
+            background-color: rgba(244, 67, 54, 0.2);
+            border-left: 4px solid #F44336;
+        }
+        
+        .alert-medium {
+            background-color: rgba(255, 193, 7, 0.2);
+            border-left: 4px solid #FFC107;
+        }
+        
+        .alert-low {
+            background-color: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #333333;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            color: #AAAAAA;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .tab-content {
+            padding: 20px 0;
+        }
+        
+        .face-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .face-card {
+            background-color: #1E1E1E;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .face-image {
+            width: 100%;
+            height: 160px;
+            background-color: #333333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .face-info {
+            padding: 12px;
+        }
+        
+        .face-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .face-status {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .status-high {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+        }
+        
+        .status-medium {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+        }
+        
+        .status-low {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="navbar">
+            <div class="navbar-title">GARUDA NIDHAN</div>
+        </div>
+        
+        <div class="sidebar">
+            <a href="#dashboard" class="menu-item active">
+                <div class="menu-item-icon">📊</div>
+                Dashboard
+            </a>
+            <a href="#video-feeds" class="menu-item">
+                <div class="menu-item-icon">📹</div>
+                Video Feeds
+            </a>
+            <a href="#face-recognition" class="menu-item">
+                <div class="menu-item-icon">👤</div>
+                Face Recognition
+            </a>
+            <a href="#feature-extraction" class="menu-item">
+                <div class="menu-item-icon">🔍</div>
+                Feature Extraction
+            </a>
+            <a href="#alerts" class="menu-item">
+                <div class="menu-item-icon">🔔</div>
+                Alerts
+            </a>
+            <a href="#analytics" class="menu-item">
+                <div class="menu-item-icon">📈</div>
+                Analytics
+            </a>
+            <a href="#settings" class="menu-item">
+                <div class="menu-item-icon">⚙️</div>
+                Settings
+            </a>
+        </div>
+        
+        <div class="main-content">
+            <div id="dashboard">
+                <h1 class="page-title">Dashboard</h1>
+                
+                <div class="grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📹</div>
+                        <div class="stat-info">
+                            <div class="stat-value">24</div>
+                            <div class="stat-label">Active Video Feeds</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🔔</div>
+                        <div class="stat-info">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">Active Alerts</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">👤</div>
+                        <div class="stat-info">
+                            <div class="stat-value">5</div>
+                            <div class="stat-label">Watchlist Matches</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <div class="stat-value">98%</div>
+                            <div class="stat-label">System Health</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-title">Recent Alerts</div>
+                    
+                    <div class="alert-item alert-high">
+                        <div class="alert-icon">⚠️</div>
+                        <div>
+                            <div><strong>Watchlist Match</strong> - Subject A (Rajesh Kumar)</div>
+                            <div style="color: #AAAAAA; font-size: 0.9rem;">North Gate • 10 minutes ago</div>
+                            <div style="color: #DDDDDD; font-size: 0.85rem; margin-top: 5px;">
+                                Match confidence: 98.7% • Subject on high-priority watchlist since 12/05/2023
+                                <br>Last known location: Sector 7, New Delhi • Biometric ID: BM-7834-9921
+                                <br>Threat assessment: Level 4 (High) • Known associates: 3 • Previous incidents: 5
+                                <br>Behavioral analysis: Agitated state • Carrying: Backpack (Black) • Height: 178cm
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-item alert-high">
+                        <div class="alert-icon">🚨</div>
+                        <div>
+                            <div><strong>Perimeter Breach</strong> - Fence Sector 12-B</div>
+                            <div style="color: #AAAAAA; font-size: 0.9rem;">South Perimeter • 5 minutes ago</div>
+                            <div style="color: #DDDDDD; font-size: 0.85rem; margin-top: 5px;">
+                                Breach type: Physical cutting • Estimated intruders: 2 • Direction: Inbound
+                                <br>Weather conditions: Heavy rain, visibility 200m • Wind: 15 km/h NE
+                                <br>Nearest camera: CCTV-S12 (partially obscured) • Drone dispatch: Quadrant 4
+                                <br>Response team: Delta-7 mobilized • ETA: 3 minutes • Protocol: Red-1 active
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-item alert-medium">
+                        <div class="alert-icon">⚠️</div>
+                        <div>
+                            <div><strong>Suspicious Activity</strong> - Loitering (Duration: 17 minutes)</div>
+                            <div style="color: #AAAAAA; font-size: 0.9rem;">East Wing • 25 minutes ago</div>
+                            <div style="color: #DDDDDD; font-size: 0.85rem; margin-top: 5px;">
+                                3 individuals detected in restricted zone B-12 • Movement pattern: circular
+                                <br>Facial recognition attempted: 2 unknown, 1 partial match (67% - Sanjay Mehta)
+                                <br>Escalation protocol: Level 2 • Nearest response team: Alpha-3 (ETA: 2 min)
+                                <br>Communication detected: Mobile phones (3) • Network: Jio • Signal strength: Medium
+                                <br>Gait analysis: One individual limping • Estimated age range: 25-35 years
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-item alert-medium">
+                        <div class="alert-icon">⚠️</div>
+                        <div>
+                            <div><strong>Object Detection</strong> - Suspicious Package (Unattended)</div>
+                            <div style="color: #AAAAAA; font-size: 0.9rem;">Waiting Area • 42 minutes ago</div>
+                            <div style="color: #DDDDDD; font-size: 0.85rem; margin-top: 5px;">
+                                Package dimensions: 45x30x20cm • Left unattended for: 8 minutes
+                                <br>Thermal scan: Negative • X-ray scan: Pending • K-9 unit dispatched
+                                <br>Evacuation radius: 15 meters • Protocol: Yellow-2 initiated
+                                <br>Material analysis: Cardboard exterior, metal components detected
+                                <br>Weight estimate: 4.7kg • Last handled by: Unknown male, blue shirt, ~30 years
+                                <br>CCTV tracking: Subject left premises via East Exit at 14:37:22
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-item alert-low">
+                        <div class="alert-icon">ℹ️</div>
+                        <div>
+                            <div><strong>Anomalous Network Activity</strong> - Unauthorized Access Attempt</div>
+                            <div style="color: #AAAAAA; font-size: 0.9rem;">Server Room • 1 hour ago</div>
+                            <div style="color: #DDDDDD; font-size: 0.85rem; margin-top: 5px;">
+                                Source IP: 192.168.14.22 • MAC Address: 00:1B:44:11:3A:B7
+                                <br>Attack vector: SSH Brute Force • Attempts: 47 • Duration: 3 minutes
+                                <br>System response: Auto-blocked • Threat intelligence: Known pattern (APT-29)
+                                <br>Affected systems: None • Data breach: Not detected
+                                <br>Forensic snapshot created • Incident ID: NET-2023-06-15-0042
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-title">System Status</div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div>
+                            <div style="margin-bottom: 8px;">CPU Usage</div>
+                            <div style="height: 8px; background-color: #333333; border-radius: 4px; overflow: hidden;">
+                                <div style="width: 45%; height: 100%; background-color: var(--primary-color);"></div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.8rem; color: #AAAAAA; margin-top: 4px;">45%</div>
+                        </div>
+                        
+                        <div>
+                            <div style="margin-bottom: 8px;">Memory Usage</div>
+                            <div style="height: 8px; background-color: #333333; border-radius: 4px; overflow: hidden;">
+                                <div style="width: 68%; height: 100%; background-color: var(--primary-color);"></div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.8rem; color: #AAAAAA; margin-top: 4px;">68%</div>
+                        </div>
+                        
+                        <div>
+                            <div style="margin-bottom: 8px;">Storage</div>
+                            <div style="height: 8px; background-color: #333333; border-radius: 4px; overflow: hidden;">
+                                <div style="width: 32%; height: 100%; background-color: var(--primary-color);"></div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.8rem; color: #AAAAAA; margin-top: 4px;">32%</div>
+                        </div>
+                        
+                        <div>
+                            <div style="margin-bottom: 8px;">Network</div>
+                            <div style="height: 8px; background-color: #333333; border-radius: 4px; overflow: hidden;">
+                                <div style="width: 78%; height: 100%; background-color: var(--primary-color);"></div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.8rem; color: #AAAAAA; margin-top: 4px;">78%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="video-feeds" style="display: none;">
+                <h1 class="page-title">Video Feeds</h1>
+                
+                <div class="video-grid">
+                    <div class="video-card">
+                        <div class="video-feed">
+                            <div style="position: relative; z-index: 2; color: white; text-align: center;">
+                                <div style="font-size: 3rem; margin-bottom: 8px;">📹</div>
+                                <div>CCTV 1</div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <div class="video-title">
+                                <span class="status-indicator status-online"></span>
+                                Main Entrance
+                            </div>
+                            <div class="video-location">Building A • Floor 1</div>
+                        </div>
+                    </div>
+                    
+                    <div class="video-card">
+                        <div class="video-feed">
+                            <div style="position: relative; z-index: 2; color: white; text-align: center;">
+                                <div style="font-size: 3rem; margin-bottom: 8px;">📹</div>
+                                <div>CCTV 2</div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <div class="video-title">
+                                <span class="status-indicator status-online"></span>
+                                East Wing
+                            </div>
+                            <div class="video-location">Building A • Floor 1</div>
+                        </div>
+                    </div>
+                    
+                    <div class="video-card">
+                        <div class="video-feed">
+                            <div style="position: relative; z-index: 2; color: white; text-align: center;">
+                                <div style="font-size: 3rem; margin-bottom: 8px;">📹</div>
+                                <div>CCTV 3</div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <div class="video-title">
+                                <span class="status-indicator status-warning"></span>
+                                Security Checkpoint
+                            </div>
+                            <div class="video-location">Building A • Floor 1</div>
+                        </div>
+                    </div>
+                    
+                    <div class="video-card">
+                        <div class="video-feed">
+                            <div style="position: relative; z-index: 2; color: white; text-align: center;">
+                                <div style="font-size: 3rem; margin-bottom: 8px;">🚁</div>
+                                <div>Drone 1</div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <div class="video-title">
+                                <span class="status-indicator status-online"></span>
+                                Perimeter Patrol
+                            </div>
+                            <div class="video-location">Outdoor • North</div>
+                        </div>
+                    </div>
+                    
+                    <div class="video-card">
+                        <div class="video-feed">
+                            <div style="position: relative; z-index: 2; color: white; text-align: center;">
+                                <div style="font-size: 3rem; margin-bottom: 8px;">👮</div>
+                                <div>Body Cam 1</div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <div class="video-title">
+                                <span class="status-indicator status-online"></span>
+                                Officer Johnson
+                            </div>
+                            <div class="video-location">Mobile • Sector 2</div>
+                        </div>
+                    </div>
+                    
+                    <div class="video-card">
+                        <div class="video-feed">
+                            <div style="position: relative; z-index: 2; color: white; text-align: center;">
+                                <div style="font-size: 3rem; margin-bottom: 8px;">📹</div>
+                                <div>CCTV 4</div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <div class="video-title">
+                                <span class="status-indicator status-offline"></span>
+                                Parking Area
+                            </div>
+                            <div class="video-location">Outdoor • West</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="face-recognition" style="display: none;">
+                <h1 class="page-title">Face Recognition & Watchlist</h1>
+                
+                <div class="tab-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="watchlist">Watchlist</div>
+                        <div class="tab" data-tab="detection-history">Detection History</div>
+                        <div class="tab" data-tab="ai-settings">AI Settings</div>
+                    </div>
+                    
+                    <div class="tab-content">
+                        <div class="face-grid">
+                            <div class="face-card">
+                                <div class="face-image">👤</div>
+                                <div class="face-info">
+                                    <div class="face-name">Subject A</div>
+                                    <div class="face-status status-high">High Alert</div>
+                                    <div style="font-size: 0.8rem; color: #AAAAAA; margin-top: 8px;">
+                                        Last seen: 10 minutes ago
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="face-card">
+                                <div class="face-image">👤</div>
+                                <div class="face-info">
+                                    <div class="face-name">Subject B</div>
+                                    <div class="face-status status-medium">Medium Alert</div>
+                                    <div style="font-size: 0.8rem; color: #AAAAAA; margin-top: 8px;">
+                                        Last seen: 2 hours ago
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="face-card">
+                                <div class="face-image">👤</div>
+                                <div class="face-info">
+                                    <div class="face-name">Subject C</div>
+                                    <div class="face-status status-low">Low Alert</div>
+                                    <div style="font-size: 0.8rem; color: #AAAAAA; margin-top: 8px;">
+                                        Last seen: 1 day ago
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="face-card">
+                                <div class="face-image">👤</div>
+                                <div class="face-info">
+                                    <div class="face-name">Subject D</div>
+                                    <div class="face-status status-high">High Alert</div>
+                                    <div style="font-size: 0.8rem; color: #AAAAAA; margin-top: 8px;">
+                                        Not detected yet
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="feature-extraction" style="display: none;">
+                <h1 class="page-title">AI Feature Extraction</h1>
+                
+                <div class="tab-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="live-detections">Live Detections</div>
+                        <div class="tab" data-tab="pattern-analysis">Pattern Analysis</div>
+                        <div class="tab" data-tab="object-recognition">Object Recognition</div>
+                        <div class="tab" data-tab="activity-detection">Activity Detection</div>
+                    </div>
+                    
+                    <div class="tab-content">
+                        <div class="grid">
+                            <div class="card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="color: #F44336; margin-right: 8px;">⚠️</div>
+                                        <div>Object Detection</div>
+                                    </div>
+                                    <div>
+                                        <button class="button button-outline" style="font-size: 0.8rem; padding: 4px 8px;">View</button>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom: 12px;">
+                                    <span class="face-status status-high" style="margin-right: 4px;">Person (5)</span>
+                                    <span class="face-status status-medium" style="margin-right: 4px;">Vehicle (2)</span>
+                                    <span class="face-status status-low">Baggage (3)</span>
+                                </div>
+                                
+                                <div style="font-size: 0.9rem; color: #AAAAAA;">
+                                    <div>Source: CCTV 1</div>
+                                    <div>Location: Main Entrance</div>
+                                    <div>Time: 14:32:17</div>
+                                    <div>Confidence: 92%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="color: #FFC107; margin-right: 8px;">⚠️</div>
+                                        <div>Activity Detection</div>
+                                    </div>
+                                    <div>
+                                        <button class="button button-outline" style="font-size: 0.8rem; padding: 4px 8px;">View</button>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom: 12px;">
+                                    <span class="face-status status-medium">Loitering</span>
+                                </div>
+                                
+                                <div style="font-size: 0.9rem; color: #AAAAAA;">
+                                    <div>Source: Drone 2</div>
+                                    <div>Location: Perimeter East</div>
+                                    <div>Time: 14:28:05</div>
+                                    <div>Confidence: 87%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="color: #F44336; margin-right: 8px;">⚠️</div>
+                                        <div>Object Detection</div>
+                                    </div>
+                                    <div>
+                                        <button class="button button-outline" style="font-size: 0.8rem; padding: 4px 8px;">View</button>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom: 12px;">
+                                    <span class="face-status status-medium" style="margin-right: 4px;">Person (2)</span>
+                                    <span class="face-status status-high">Weapon (1)</span>
+                                </div>
+                                
+                                <div style="font-size: 0.9rem; color: #AAAAAA;">
+                                    <div>Source: CCTV 4</div>
+                                    <div>Location: Security Checkpoint</div>
+                                    <div>Time: 14:15:42</div>
+                                    <div>Confidence: 95%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="analytics" style="display: none;">
+                <h1 class="page-title">Analytics</h1>
+                
+                <div class="tab-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="trends">Trends</div>
+                        <div class="tab" data-tab="reports">Reports</div>
+                        <div class="tab" data-tab="insights">Insights</div>
+                    </div>
+                    
+                    <div class="tab-content">
+                        <div class="card">
+                            <div class="card-title">Alert Trend Analysis</div>
+                            <div style="height: 200px; background-color: #1E1E1E; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center;">
+                                <div style="text-align: center; color: #AAAAAA;">
+                                    [Chart Visualization Placeholder]
+                                </div>
+                            </div>
+                            <div style="background-color: #2A2A2A; padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                                <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary-color);">Data Interpretation</div>
+                                <div style="font-size: 0.9rem; line-height: 1.5;">
+                                    <p>The analysis shows a <strong>32% increase</strong> in perimeter breach attempts over the last 30 days, concentrated primarily in the North-East sector between 0100-0400 hours.</p>
+                                    <p>Facial recognition matches have improved by <strong>17.8%</strong> since the latest algorithm update, with false positives reduced to under 0.5%.</p>
+                                    <p>Recommendation: Increase patrol frequency in North-East sector during identified hours and consider deploying additional thermal imaging cameras at vulnerable points A3, B7, and C2.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="margin-top: 24px;">
+                            <div class="card-title">Threat Pattern Recognition</div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                                <div style="background-color: #2A2A2A; padding: 16px; border-radius: 8px;">
+                                    <div style="font-weight: 500; margin-bottom: 8px;">Temporal Analysis</div>
+                                    <div style="height: 120px; background-color: #1E1E1E; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; color: #AAAAAA;">
+                                        [Time-based Pattern Chart]
+                                    </div>
+                                    <div style="font-size: 0.85rem; color: #DDDDDD;">
+                                        Peak activity detected between 2300-0200 hours, correlating with shift change timings. Recommend staggered shift transitions to eliminate security gaps.
+                                    </div>
+                                </div>
+                                
+                                <div style="background-color: #2A2A2A; padding: 16px; border-radius: 8px;">
+                                    <div style="font-weight: 500; margin-bottom: 8px;">Spatial Analysis</div>
+                                    <div style="height: 120px; background-color: #1E1E1E; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; color: #AAAAAA;">
+                                        [Location Heatmap]
+                                    </div>
+                                    <div style="font-size: 0.85rem; color: #DDDDDD;">
+                                        Hotspot identified at junction points between sectors B and C. Analysis suggests coordinated approach to exploit blind spots in camera coverage. Recommend immediate reconfiguration of camera angles.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simple tab navigation
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Hide all content sections
+                document.querySelectorAll('.main-content > div').forEach(section => {
+                    if (section) {
+                        section.style.display = 'none';
+                    }
+                });
+                
+                // Remove active class from all menu items
+                document.querySelectorAll('.menu-item').forEach(menuItem => {
+                    menuItem.classList.remove('active');
+                });
+                
+                // Show the selected section
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.style.display = 'block';
+                }
+                
+                // Add active class to the clicked menu item
+                this.classList.add('active');
+            });
+        });
+        
+        // Tab navigation within pages
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs in this container
+                const tabContainer = this.closest('.tabs');
+                if (tabContainer) {
+                    tabContainer.querySelectorAll('.tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                }
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+            });
+        });
+        
+        // Initialize - make sure dashboard is visible by default
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide all sections except dashboard
+            document.querySelectorAll('.main-content > div').forEach(section => {
+                if (section && section.id !== 'dashboard') {
+                    section.style.display = 'none';
+                }
+            });
+            
+            // Make dashboard visible
+            const dashboard = document.getElementById('dashboard');
+            if (dashboard) {
+                dashboard.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
